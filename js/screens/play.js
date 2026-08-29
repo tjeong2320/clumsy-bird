@@ -32,7 +32,16 @@ game.PlayScreen = me.ScreenObject.extend({
         me.game.world.addChild(this.HUD, 11);
 
         this.bird = me.pool.pull("clumsy", 60, me.game.viewport.height/2 - 100);
+        // Reset lives from current entitlements so newly-purchased hearts
+        // take effect on the next run.
+        if (this.bird && typeof this.bird.resetLives === 'function') {
+            this.bird.resetLives();
+        }
         me.game.world.addChild(this.bird, 10);
+
+        if (window.CBShop && typeof window.CBShop.refreshEntitlements === 'function') {
+            window.CBShop.refreshEntitlements();
+        }
 
         //inputs
         me.input.bindPointer(me.input.pointer.LEFT, me.input.KEY.SPACE);

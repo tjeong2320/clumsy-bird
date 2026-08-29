@@ -14,11 +14,15 @@ game.TitleScreen = me.ScreenObject.extend({
         me.game.world.addChild(new BackgroundLayer('bg', 1));
         me.input.bindKey(me.input.KEY.ENTER, "enter", true);
         me.input.bindKey(me.input.KEY.SPACE, "enter", true);
+        me.input.bindKey(me.input.KEY.S, "shop", true);
         me.input.bindPointer(me.input.pointer.LEFT, me.input.KEY.ENTER);
 
+        var that = this;
         this.handler = me.event.subscribe(me.event.KEYDOWN, function (action, keyCode, edge) {
             if (action === "enter") {
                 me.state.change(me.state.PLAY);
+            } else if (action === "shop" && window.CBShop) {
+                window.CBShop.openShop();
             }
         });
 
@@ -47,7 +51,9 @@ game.TitleScreen = me.ScreenObject.extend({
                 // size does not matter, it's just to avoid having a zero size
                 // renderable
                 this._super(me.Renderable, 'init', [0, 0, 100, 100]);
-                this.text = me.device.touch ? 'Tap to start' : 'PRESS SPACE OR CLICK LEFT MOUSE BUTTON TO START \n\t\t\t\t\t\t\t\t\t\t\tPRESS "M" TO MUTE SOUND';
+                this.text = me.device.touch
+                    ? 'Tap to start\nPress "S" to open Shop'
+                    : 'PRESS SPACE OR CLICK LEFT MOUSE BUTTON TO START\nPRESS "M" TO MUTE SOUND\nPRESS "S" TO OPEN SHOP';
                 this.font = new me.Font('gamefont', 20, '#000');
             },
             draw: function (renderer) {
@@ -65,6 +71,7 @@ game.TitleScreen = me.ScreenObject.extend({
         me.input.unbindKey(me.input.KEY.ENTER);
         me.input.unbindKey(me.input.KEY.SPACE);
         me.input.unbindPointer(me.input.pointer.LEFT);
+        me.input.unbindKey(me.input.KEY.S);
         this.ground1 = null;
         this.ground2 = null;
         me.game.world.removeChild(this.logo);

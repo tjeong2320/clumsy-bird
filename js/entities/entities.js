@@ -32,6 +32,39 @@ game.BirdEntity = me.Entity.extend({
         this.collided = false;
 
         this.gravityForce = 0.2;
+
+        // Lives & invincibility. Lives reset on every new game start
+        // (see js/screens/play.js or wherever me.state.PLAY is entered).
+        this.invincibleUntilMs = 0;
+        this._resolveMaxHearts();
+        this.currentLives = this._maxHearts;
+
+        // Make this entity visible to the HUD/Shop via game.data.
+        if (window.game) { game.data.bird = this; }
+    },
+
+    _resolveMaxHearts: function() {
+        var ent = (window.CBShop && window.CBShop.loadCachedEntitlements())
+                  || { heartsPurchased: 0 };
+        var base = (window.CBShop && window.CBShop.BASE_HEARTS) || 1;
+        var maxP = (window.CBShop && window.CBShop.MAX_PURCHASES) || 4;
+        this._maxHearts = Math.min(base + (ent.heartsPurchased || 0), base + maxP);
+        this._heartsPurchased = ent.heartsPurchased || 0;
+    },
+
+    /**
+     * Called by js/screens/play.js when the PLAY state is entered so that
+     * any hearts purchased between runs are reflected.
+     */
+    resetLives: function() {
+        this._resolveMaxHearts();
+        this.currentLives = this._maxHearts;
+        this.invincibleUntilMs = 0;
+        this.collided = false;
+        // Notify the HUD so it picks up the (possibly higher) max + full lives.
+        window.dispatchEvent(new CustomEvent('cb:lives', {
+            detail: { currentLives: this.currentLives, maxHearts: this._maxHearts }
+        }));
     },
 
     update: function(dt) {
@@ -67,6 +100,17 @@ game.BirdEntity = me.Entity.extend({
                 this.currentAngle = this.maxAngleRotationDown;
             }
         }
+
+        // Sprite alpha flash during invincibility frames.
+        var now = Date.now();
+        var invincible = now < this.invincibleUntilMs;
+        if (invincible) {
+            // 5Hz flash between full and half opacity.
+            this.renderable.alpha = (Math.floor(now / 100) % 2) ? 0.4 : 1.0;
+        } else if (this.renderable.alpha !== 1) {
+            this.renderable.alpha = 1;
+        }
+
         this.renderable.currentTransform.rotate(this.currentAngle);
         me.Rect.prototype.updateBounds.apply(this);
 
@@ -77,14 +121,39 @@ game.BirdEntity = me.Entity.extend({
             this.endAnimation();
             return false;
         }
-        me.collision.check(this);
+        // Skip collision check entirely while invincible so we don't
+        // repeatedly collide with the same pipe.
+        if (!invincible) {
+            me.collision.check(this);
+        }
         return true;
     },
 
     onCollision: function(response) {
         var obj = response.b;
         if (obj.type === 'pipe' || obj.type === 'ground') {
+            // Ignore collisions while invincible.
+            if (Date.now() < this.invincibleUntilMs) {
+                return;
+            }
             me.device.vibrate(500);
+
+            if (this.currentLives > 1) {
+                // Lose a life but keep playing.
+                this.currentLives -= 1;
+                this.invincibleUntilMs = Date.now() + 2000;
+                me.audio.play('hit');
+                // Small upward nudge so the bird visibly "recovers".
+                this.gravityForce = 0.0;
+                this.pos.y -= 8;
+                // Notify HUD/Shop so they can re-read lives if needed.
+                window.dispatchEvent(new CustomEvent('cb:lives', {
+                    detail: { currentLives: this.currentLives, maxHearts: this._maxHearts }
+                }));
+                return;
+            }
+
+            // Out of lives -> Game Over.
             this.collided = true;
         }
         // remove the hit box
