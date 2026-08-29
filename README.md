@@ -1,5 +1,8 @@
 # Clumsy Bird with NEON
 
+
+![game-screen-1](data/img/game-screen-2.png) ![game-screen-2](data/img/game-screen-1.png)
+
 ***
 
 ## 1. Game overview
@@ -15,8 +18,8 @@ The game had one life before modification: collision to pipe or ground triggers 
 ### Prerequisites
 
 - Node.js 18+
-- `Neon Console`(https://neonpay.com) access with a sandbox API key
-- `ngrok`(https://ngrok.com/download) account for exposing the local server to Neon
+- `Neon Console`(<https://neonpay.com>) access with a sandbox API key
+- `ngrok`(<https://ngrok.com/download>) account for exposing the local server to Neon
 - A subdomain for `ngrok-free.dev`for webhook endpoint exposure
 
 ### Steps
@@ -65,22 +68,25 @@ The game had one life before modification: collision to pipe or ground triggers 
 ## 3. New Features
 
 ### Game Server
+
 - Express backend
 - Maps for in-memory ledger of checkouts, purchases, and player state
 - API route for getting localized pricing GET `/api/prices`
 - API route for creating a new checkout POST `/api/checkout`
 - API route for polling the checkout status GET `/api/checkout/:id`
 - API route for expiring a checkout POST `/api/checkout/:id/expire`
-- API route for getting entitlements GET `/api/entitlements/:accountId`
-- Debug endpoint for inspection of in-memory ledgers GET `/_debug/state`
+- API route for getting entitlements GET `/api/entitlements/:accountId` (Not Neon API)
+- Debug endpoint for inspection of in-memory ledgers GET `/_debug/state` (Not Neon API)
 
 ### Heart System
+
 - Heart and Heart Box items
 - Multi-life collision
 - HUD for displaying heart count
 - Handle entitlement local storage manipulation
 
 ### Purchase System
+
 - Shop modal
 - Display localized pricing (Turned off in Sandbox mode)
 - Dynamic price update based on purchase history
